@@ -94,7 +94,8 @@ function resultados_(password) {
   if (!passwordOk_(password)) return { ok: false, error: "BAD_PASSWORD" };
   const rows = [];
   filas_(hoja_()).forEach(f => { try { rows.push(JSON.parse(f[5])); } catch (e) { /* fila dañada: se omite */ } });
-  return { ok: true, rows: rows };
+  // El enlace a la hoja solo se entrega con la contraseña correcta.
+  return { ok: true, rows: rows, sheetUrl: libro_().getUrl() };
 }
 
 function eliminar_(password, id) {

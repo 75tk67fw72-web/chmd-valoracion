@@ -342,7 +342,9 @@ const api = {
       if (password !== CONFIG.DEMO_ADMIN_PASSWORD) throw new Error("BAD_PASSWORD");
       return ls.get(LS_DEMO_DB) || [];
     }
-    return (await callScript({ action: "results", password })).rows;
+    const out = await callScript({ action: "results", password });
+    sheetUrl = /^https:\/\/docs\.google\.com\//.test(out.sheetUrl || "") ? out.sheetUrl : null;
+    return out.rows;
   },
   async remove(password, id){
     if (DEMO){
@@ -653,6 +655,7 @@ function goStep(n){ draft.step = n; saveDraft(); renderEvaluator(); window.scrol
    ===================================================================== */
 let adminPassword = null;
 let adminData = [];
+let sheetUrl = null; // enlace a la hoja de Google; lo entrega Apps Script tras validar la contraseña
 
 function renderAdminLogin(msg){
   $app.innerHTML = `
@@ -770,6 +773,7 @@ function renderDashboard(){
     <div class="toolbar">
       <button class="btn small" id="refresh">↻ Actualizar</button>
       <button class="btn small ghost" id="csv" ${A.n ? "" : "disabled"}>Exportar CSV</button>
+      ${sheetUrl ? `<a class="btn small ghost" href="${esc(sheetUrl)}" target="_blank" rel="noopener">Abrir hoja de Google ↗</a>` : ""}
       <button class="btn small ghost" id="logout">Salir</button>
     </div>
 
@@ -828,7 +832,7 @@ function renderDashboard(){
     try { adminData = await api.results(adminPassword); renderDashboard(); } catch (e){ alert(errText(e)); }
   };
   document.getElementById("logout").onclick = () => {
-    adminPassword = null; adminData = [];
+    adminPassword = null; adminData = []; sheetUrl = null;
     history.replaceState(null, "", location.pathname + location.search);
     renderEvaluator();
   };
