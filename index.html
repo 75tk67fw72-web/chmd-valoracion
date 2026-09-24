@@ -72,6 +72,7 @@
   .btn.small{padding:8px 12px;font-size:14px}
   .btn.danger{background:transparent;color:var(--danger);border:1px solid #f1c3bf}
   .btn[disabled]{opacity:.55;cursor:not-allowed}
+  a.btn{text-decoration:none}
   .nav{display:flex;gap:10px;margin-top:20px}
   .nav .btn{flex:1}
 
@@ -446,6 +447,7 @@ function renderWelcome(){
       <input type="text" id="name" autocomplete="name" maxlength="80" placeholder="Nombre y apellido" value="${esc(draft.name)}" />
       <div class="err" id="err"></div>
       <div class="nav"><button class="btn gold" id="start">Comenzar →</button></div>
+      <div class="nav" style="margin-top:10px"><a class="btn ghost" id="toAdmin" href="#resultados">Administración · ver resultados</a></div>
       <p class="muted" style="font-size:13px;margin:12px 0 0">Solo puedes enviar una vez. Si cierras la página, tu avance queda guardado en este dispositivo.</p>
     </div>`;
   const input = document.getElementById("name");
@@ -632,7 +634,15 @@ function renderThanks(name, already){
       <h2>Gracias${name ? ", " + esc(name.split(" ")[0]) : ""}</h2>
       <p class="lead">${already ? "Tu valoración desde este dispositivo ya fue enviada." : "Tu valoración se envió correctamente."}</p>
       <p class="lead">Es confidencial y será el insumo, junto con la del resto del Comité, para la sesión de cierre.</p>
+      <div class="nav"><button class="btn" id="home">← Regresar al inicio</button></div>
     </div>`;
+  // Deja la página lista para otra valoración desde este dispositivo.
+  // (La hoja de Google sigue rechazando un nombre que ya envió.)
+  document.getElementById("home").onclick = () => {
+    ls.del(LS_SUBMITTED); ls.del(LS_DRAFT);
+    draft = blankDraft();
+    renderEvaluator(); window.scrollTo(0, 0);
+  };
   window.scrollTo(0, 0);
 }
 

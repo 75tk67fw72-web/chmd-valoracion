@@ -11,7 +11,8 @@ Un solo enlace, en celular o computadora, sin cuentas ni inicio de sesión.
 - El equipo abre el enlace y responde. **No necesita cuenta** de Google, Claude ni nada.
 - Cada respuesta se guarda en una **hoja de Google Sheets privada tuya**.
 - La sección de resultados (`#resultados`) pide contraseña. **La valida Google**, no la página, así que no aparece en el código.
-- Una sola respuesta por nombre (controlada en la hoja) y por dispositivo.
+- Una sola respuesta por nombre (controlada en la hoja). Al terminar, **Regresar al inicio** deja la página lista para otra persona en el mismo dispositivo.
+- La pantalla inicial tiene el botón **Administración · ver resultados**, que pide la contraseña.
 
 **Contraseña de administración**
 - En **modo demo**: `demo`.
