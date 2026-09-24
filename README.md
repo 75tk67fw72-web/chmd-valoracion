@@ -88,7 +88,7 @@ Si la página no tuviera la URL de Apps Script, el enlace muestra "La valoració
 - **El evaluador no calcula nada**: la herramienta calcula el ponderado.
 - **N/O – no observado / información insuficiente**: disponible en cada criterio y para cada candidata. Se excluye del cálculo individual y el ponderado se ajusta sobre el peso efectivamente evaluado (p. ej., con N/O en el criterio 4, el resto se calcula sobre 82%).
 - **Evidencia escrita siempre opcional.** Con puntaje extremo (1 o 5) o 2 o más puntos de diferencia entre candidatas, el campo se abre solo como sugerencia, sin impedir continuar. Se configura en `EVIDENCE_RULE`.
-- **Comentarios generales**: si el evaluador no escribió evidencia en ningún criterio, al dar **Continuar** en la parte 1 se abre un recuadro obligatorio (mínimo 10 caracteres) para sus observaciones o evidencias generales. Si escribió al menos una evidencia, no aparece.
+- **Comentarios generales (obligatorio para todos)**: al dar **Continuar** en la parte 1 se abre un recuadro para las observaciones o evidencias generales (mínimo 10 caracteres). No se puede avanzar sin llenarlo, aunque se haya escrito evidencia en los criterios.
 - **Identidad judía y alineación cultural** se mantiene en 18%.
 - **Finanzas (10a) y operación (10b)** se evalúan por separado y comparten el 2% original (1% cada uno).
 - **Total del Comité** = promedio de los ponderados individuales (cada uno ya ajustado por N/O).

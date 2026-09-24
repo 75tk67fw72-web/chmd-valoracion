@@ -555,16 +555,19 @@ function renderPart1(){
   };
 }
 
-// Si no hay evidencia escrita en ningún criterio, al dar "Continuar" se abre un recuadro
-// obligatorio de comentarios generales; no se puede avanzar sin llenarlo.
+// Al dar "Continuar" en la parte 1 se abre un recuadro obligatorio de comentarios
+// generales (para todos, haya o no evidencia por criterio); no se puede avanzar sin llenarlo.
 const GENERAL_MIN = 10; // caracteres mínimos
-const generalRequired = () => !CRITERIA.some(c => draft.scores[c.id].note.trim());
+const generalRequired = () => true;
+const hasEvidence = () => CRITERIA.some(c => draft.scores[c.id].note.trim());
 function openGeneralModal(){
   const ov = document.createElement("div");
   ov.className = "overlay";
   ov.innerHTML = `<div class="modal card" role="dialog" aria-modal="true" aria-labelledby="gm-title">
       <h3 id="gm-title">Comentarios generales</h3>
-      <p class="desc">No escribiste evidencia en ningún criterio. Para continuar, comparte tus <b>observaciones o evidencias generales</b> sobre ambas candidatas.</p>
+      <p class="desc">${hasEvidence()
+        ? "Antes de continuar, comparte tus <b>observaciones o evidencias generales</b> sobre ambas candidatas: lo que no cabe en un solo criterio."
+        : "No escribiste evidencia en ningún criterio. Para continuar, comparte tus <b>observaciones o evidencias generales</b> sobre ambas candidatas."}</p>
       <textarea id="general" maxlength="1500" placeholder="¿Qué observaste de Daniela y de Lila que sustente tus puntajes?">${esc(draft.general)}</textarea>
       <div class="gm-count" id="gm-count"></div>
       <div class="nav"><button class="btn ghost" id="gm-back">← Volver</button><button class="btn" id="gm-go">Guardar y continuar →</button></div>
