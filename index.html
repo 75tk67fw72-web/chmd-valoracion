@@ -103,7 +103,7 @@
   .group{font-size:11px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);font-weight:700;margin-bottom:4px}
   .rules{background:#fff;border:1px solid var(--border);border-radius:12px;padding:12px 14px;font-size:14px;color:var(--muted);display:grid;gap:6px}
   .rules b{color:var(--navy)}
-  label.need{display:block;font-size:13px;font-weight:700;color:#8A4B00;margin-bottom:6px}
+  label.need{display:block;font-size:13px;font-weight:600;color:var(--muted);margin-bottom:6px}
   .addnote{background:none;border:0;padding:4px 0;color:var(--navy);font-size:14px;font-weight:600;cursor:pointer}
   .note textarea{min-height:44px;font-size:15px;padding:10px 12px}
 
@@ -272,7 +272,7 @@ const CRITERIA = [
            "Se evalúa por separado de las finanzas; ambos comparten el 2% del criterio original."] },
 ];
 
-// Evidencia escrita obligatoria solo si hay puntaje extremo o diferencia importante.
+// La evidencia escrita es siempre opcional; se sugiere (campo abierto) con puntaje extremo o diferencia importante.
 const EVIDENCE_RULE = { extremes: [1, 5], minGap: 2 };
 const NO = "NO"; // N/O – no observado / información insuficiente
 
@@ -401,9 +401,7 @@ function progressHTML(){
   if (draft.step === 1){
     total = CRITERIA.length * 2;
     CRITERIA.forEach(c => { if (draft.scores[c.id].daniela) done++; if (draft.scores[c.id].lila) done++; });
-    const needNote = CRITERIA.filter(c => evidenceReason(draft.scores[c.id]) && !draft.scores[c.id].note.trim()).length;
     label = done + " / " + total + " puntajes";
-    if (needNote) extra = `${needNote} evidencia${needNote > 1 ? "s" : ""} escrita${needNote > 1 ? "s" : ""} pendiente${needNote > 1 ? "s" : ""}`;
   } else if (draft.step === 2){
     total = QUESTIONS.length; done = QUESTIONS.filter(q => draft.comparisons[q.id]).length;
     label = done + " / " + total + " respondidas";
@@ -471,7 +469,7 @@ function scaleHTML(cid, cand){
 
 function noteHTML(cid){
   const s = draft.scores[cid], reason = evidenceReason(s);
-  if (reason) return `<label class="need" for="note-${cid}">Evidencia requerida · ${esc(reason)}</label>
+  if (reason) return `<label class="need" for="note-${cid}">Sugerido agregar evidencia (opcional) · ${esc(reason)}</label>
     <textarea id="note-${cid}" data-note="${cid}" maxlength="500" placeholder="¿Qué observaste concretamente que justifica este puntaje?">${esc(s.note)}</textarea>`;
   if (s.note || s.open) return `<textarea id="note-${cid}" data-note="${cid}" maxlength="500" placeholder="Evidencia observada (opcional)">${esc(s.note)}</textarea>`;
   return `<button type="button" class="addnote" data-open="${cid}">+ Agregar evidencia (opcional)</button>`;
@@ -482,7 +480,7 @@ function bindNote(cid){
   if (t) t.oninput = () => { draft.scores[cid].note = t.value; saveDraft(); if (t.value.trim()) box.closest(".crit").classList.remove("missing"); refreshProgress(); };
   if (o) o.onclick = () => { draft.scores[cid].open = true; box.innerHTML = noteHTML(cid); bindNote(cid); box.querySelector("textarea").focus(); };
 }
-const cardIncomplete = c => { const s = draft.scores[c.id]; return !s.daniela || !s.lila || (evidenceReason(s) && !s.note.trim()); };
+const cardIncomplete = c => { const s = draft.scores[c.id]; return !s.daniela || !s.lila; };
 
 function renderPart1(){
   const cards = CRITERIA.map(c => `
@@ -505,7 +503,7 @@ function renderPart1(){
     <div class="rules">
       <div><b>Escala:</b> 1 Muy débil · 2 Débil · 3 Cumple · 4 Sólido · 5 Excepcional</div>
       <div><b>N/O</b> = no observado / información insuficiente. Ese criterio se excluye de tu cálculo y tu resultado ponderado se ajusta sobre los criterios efectivamente evaluados.</div>
-      <div><b>Evidencia escrita:</b> solo se pide cuando das un 1 o un 5, o cuando hay 2+ puntos de diferencia entre candidatas.</div>
+      <div><b>Evidencia escrita:</b> opcional. Te la sugerimos cuando das un 1 o un 5, o cuando hay 2+ puntos de diferencia entre candidatas.</div>
     </div>
     ${cards}
     <div class="err" id="err"></div>
@@ -528,12 +526,7 @@ function renderPart1(){
     const missing = CRITERIA.filter(cardIncomplete);
     CRITERIA.forEach(c => document.getElementById("card-" + c.id).classList.toggle("missing", missing.includes(c)));
     if (missing.length){
-      const noScore = missing.filter(c => !draft.scores[c.id].daniela || !draft.scores[c.id].lila).length;
-      const noNote = missing.length - noScore;
-      document.getElementById("err").textContent = [
-        noScore ? `${noScore} criterio${noScore > 1 ? "s" : ""} sin puntaje para ambas candidatas (usa N/O si no tienes base)` : "",
-        noNote ? `${noNote} criterio${noNote > 1 ? "s" : ""} requiere${noNote > 1 ? "n" : ""} evidencia escrita` : "",
-      ].filter(Boolean).join(" · ") + ".";
+      document.getElementById("err").textContent = `${missing.length} criterio${missing.length > 1 ? "s" : ""} sin puntaje para ambas candidatas (usa N/O si no tienes base).`;
       document.getElementById("card-" + missing[0].id).scrollIntoView({ behavior: "smooth", block: "center" });
       return;
     }
