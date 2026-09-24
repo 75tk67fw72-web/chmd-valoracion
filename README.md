@@ -88,6 +88,7 @@ Si la página no tuviera la URL de Apps Script, el enlace muestra "La valoració
 - **El evaluador no calcula nada**: la herramienta calcula el ponderado.
 - **N/O – no observado / información insuficiente**: disponible en cada criterio y para cada candidata. Se excluye del cálculo individual y el ponderado se ajusta sobre el peso efectivamente evaluado (p. ej., con N/O en el criterio 4, el resto se calcula sobre 82%).
 - **Evidencia escrita siempre opcional.** Con puntaje extremo (1 o 5) o 2 o más puntos de diferencia entre candidatas, el campo se abre solo como sugerencia, sin impedir continuar. Se configura en `EVIDENCE_RULE`.
+- **Comentarios generales**: recuadro al final de la parte 1. Es **obligatorio solo si** el evaluador no escribió evidencia en ningún criterio; si escribió al menos una, es opcional.
 - **Identidad judía y alineación cultural** se mantiene en 18%.
 - **Finanzas (10a) y operación (10b)** se evalúan por separado y comparten el 2% original (1% cada uno).
 - **Total del Comité** = promedio de los ponderados individuales (cada uno ya ajustado por N/O).
@@ -99,7 +100,9 @@ Si la página no tuviera la URL de Apps Script, el enlace muestra "La valoració
 - Por criterio: promedio de cada candidata sin contar N/O, quién tiene ventaja y cuántos N/O hubo (★ = criterio de mayor peso).
 - Preguntas de contraste: conteo y porcentaje por pregunta.
 - Respuestas individuales desplegables: puntajes, evidencias, contrastes y razón principal. La etiqueta **"≠ puntajes"** marca a quien eligió una candidata distinta a la que salió mejor en sus propios puntajes; conviene conversarlo en la sesión de cierre.
+- **Comentarios escritos**: nube de palabras (el tamaño indica cuántas veces aparece cada palabra) y compendio de todos los comentarios, agrupados por criterio, comentarios generales y razón de la preferencia final.
 - **Exportar CSV**: archivo para abrir en Excel o archivar.
+- **Abrir hoja de Google**: botón que abre tu hoja para editarla. Aparece si Apps Script está actualizado o si pones el enlace en `SHEET_URL` dentro de `index.html` (es seguro: la hoja es privada).
 
 ## Cambios frecuentes
 

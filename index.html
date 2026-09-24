@@ -149,6 +149,12 @@
   .hbar .fill{height:100%;border-radius:6px}
   .hbar .v{text-align:right;font-weight:700;font-variant-numeric:tabular-nums}
   .nocount{font-size:12px;color:var(--muted);margin-top:4px}
+  .cloud{display:flex;flex-wrap:wrap;justify-content:center;align-items:baseline;gap:4px 12px;padding:16px 8px;margin-top:10px;background:#F8F9FB;border:1px solid var(--border);border-radius:12px;line-height:1.15}
+  .cloud .w{color:var(--navy);cursor:default}
+  details.cgroup{border-top:1px solid var(--border);padding:10px 0}
+  details.cgroup summary{cursor:pointer;font-weight:600;font-size:14px;color:var(--navy)}
+  .cmt{font-size:14px;padding:8px 0 0 12px;border-left:3px solid var(--gold-soft);margin:8px 0 0}
+  .cmt .who{font-weight:600;font-size:13px}
   .chip{font-size:12px;font-weight:700;padding:3px 9px;border-radius:999px;white-space:nowrap}
   .chip.dan{background:var(--dan-soft);color:var(--dan)}
   .chip.lila{background:var(--lila-soft);color:var(--lila)}
@@ -222,6 +228,11 @@ const CONFIG = {
   // Se usa SOLO en modo demo. En vivo, la contraseña la valida Google Apps Script
   // y nunca aparece en esta página. No pongas aquí la contraseña real: esta página es pública.
   DEMO_ADMIN_PASSWORD: "demo",
+
+  // Opcional: enlace a tu hoja de Google para el botón "Abrir hoja de Google".
+  // Es seguro ponerlo aquí: la hoja es privada y solo la abre quien tenga permiso en Google.
+  // Si se deja vacío, el botón usa el enlace que entrega Apps Script (si está actualizado).
+  SHEET_URL: "",
 };
 
 const SCALE = ["Muy débil", "Débil", "Cumple", "Sólido", "Excepcional"];
@@ -387,7 +398,7 @@ function blankDraft(){
   CRITERIA.forEach(c => scores[c.id] = { daniela: null, lila: null, note: "" });
   const comparisons = {};
   QUESTIONS.forEach(q => comparisons[q.id] = null);
-  return { step: 0, name: "", scores, comparisons, final_choice: null, final_reasoning: ["", "", ""] };
+  return { step: 0, name: "", scores, comparisons, final_choice: null, final_reasoning: ["", "", ""], general: "" };
 }
 let draft = (() => {
   const d = blankDraft(), saved = ls.get(LS_DRAFT) || {};
@@ -481,7 +492,7 @@ function noteHTML(cid){
 function bindNote(cid){
   const box = document.getElementById("note-box-" + cid);
   const t = box.querySelector("textarea"), o = box.querySelector("[data-open]");
-  if (t) t.oninput = () => { draft.scores[cid].note = t.value; saveDraft(); if (t.value.trim()) box.closest(".crit").classList.remove("missing"); refreshProgress(); };
+  if (t) t.oninput = () => { draft.scores[cid].note = t.value; saveDraft(); if (t.value.trim()) box.closest(".crit").classList.remove("missing"); refreshProgress(); updateGeneralHint(); };
   if (o) o.onclick = () => { draft.scores[cid].open = true; box.innerHTML = noteHTML(cid); bindNote(cid); box.querySelector("textarea").focus(); };
 }
 const cardIncomplete = c => { const s = draft.scores[c.id]; return !s.daniela || !s.lila; };
@@ -510,8 +521,17 @@ function renderPart1(){
       <div><b>Evidencia escrita:</b> opcional. Te la sugerimos cuando das un 1 o un 5, o cuando hay 2+ puntos de diferencia entre candidatas.</div>
     </div>
     ${cards}
+    <div class="card crit" id="card-general">
+      <h3>Comentarios generales</h3>
+      <p class="desc" id="general-hint"></p>
+      <textarea id="general" maxlength="1000" placeholder="Tus observaciones generales sobre ambas candidatas">${esc(draft.general)}</textarea>
+    </div>
     <div class="err" id="err"></div>
     <div class="nav"><button class="btn ghost" id="back">← Atrás</button><button class="btn" id="next">Continuar →</button></div>`;
+
+  const general = document.getElementById("general");
+  general.oninput = () => { draft.general = general.value; saveDraft(); if (general.value.trim()) document.getElementById("card-general").classList.remove("missing"); };
+  updateGeneralHint();
 
   $app.querySelectorAll(".scale button").forEach(btn => btn.onclick = () => {
     const { c, k, v } = btn.dataset;
@@ -534,8 +554,24 @@ function renderPart1(){
       document.getElementById("card-" + missing[0].id).scrollIntoView({ behavior: "smooth", block: "center" });
       return;
     }
+    if (generalRequired() && !draft.general.trim()){
+      document.getElementById("card-general").classList.add("missing");
+      document.getElementById("err").textContent = "No escribiste evidencia en ningún criterio: deja al menos un comentario general.";
+      document.getElementById("card-general").scrollIntoView({ behavior: "smooth", block: "center" });
+      general.focus({ preventScroll: true });
+      return;
+    }
     goStep(2);
   };
+}
+
+// Los comentarios generales son obligatorios solo si no hay evidencia escrita en ningún criterio.
+const generalRequired = () => !CRITERIA.some(c => draft.scores[c.id].note.trim());
+function updateGeneralHint(){
+  const h = document.getElementById("general-hint");
+  if (h) h.textContent = generalRequired()
+    ? "Obligatorio: no escribiste evidencia en ningún criterio. Comparte al menos una observación general."
+    : "Opcional: cualquier observación adicional sobre las candidatas.";
 }
 
 function choiceHTML(attr, id, value, big){
@@ -611,7 +647,10 @@ async function submit(){
   btn.disabled = true; btn.textContent = "Enviando…"; err.textContent = "";
   const row = {
     evaluator_name: draft.name.trim(),
-    scores: Object.fromEntries(CRITERIA.map(c => { const x = draft.scores[c.id]; return [c.id, { daniela: x.daniela, lila: x.lila, note: x.note.trim() }]; })),
+    // El comentario general viaja dentro de `scores` (clave _general) para no requerir cambios en Apps Script.
+    scores: Object.assign(
+      Object.fromEntries(CRITERIA.map(c => { const x = draft.scores[c.id]; return [c.id, { daniela: x.daniela, lila: x.lila, note: x.note.trim() }]; })),
+      draft.general.trim() ? { _general: draft.general.trim() } : {}),
     comparisons: draft.comparisons,
     final_choice: draft.final_choice,
     final_reasoning: draft.final_reasoning.map(s => s.trim()).filter(Boolean),
@@ -758,6 +797,7 @@ function renderDashboard(){
             <td class="n dan">${esc(showVal(s.daniela))}</td><td class="n lila">${esc(showVal(s.lila))}</td></tr>`; }).join("")}
           </tbody>
         </table>
+        ${generalOf(r) ? `<div class="section-title" style="margin-top:16px">Comentarios generales</div><p class="kv">${esc(generalOf(r))}</p>` : ""}
         <div class="section-title" style="margin-top:16px">Preguntas de contraste</div>
         ${QUESTIONS.map((q, i) => { const v = r.comparisons && r.comparisons[q.id]; const c = candByName(v);
           return `<div class="kv">${i + 1}. ${esc(q.text)} → ${c ? `<b style="color:var(--${c.cls})">${c.name}</b>` : "–"}</div>`; }).join("")}
@@ -773,7 +813,7 @@ function renderDashboard(){
     <div class="toolbar">
       <button class="btn small" id="refresh">↻ Actualizar</button>
       <button class="btn small ghost" id="csv" ${A.n ? "" : "disabled"}>Exportar CSV</button>
-      ${sheetUrl ? `<a class="btn small ghost" href="${esc(sheetUrl)}" target="_blank" rel="noopener">Abrir hoja de Google ↗</a>` : ""}
+      ${(sheetUrl || CONFIG.SHEET_URL) ? `<a class="btn small ghost" href="${esc(sheetUrl || CONFIG.SHEET_URL)}" target="_blank" rel="noopener">Abrir hoja de Google ↗</a>` : ""}
       <button class="btn small ghost" id="logout">Salir</button>
     </div>
 
@@ -821,6 +861,8 @@ function renderDashboard(){
         </div>`).join("")}
     </div>
 
+    ${commentsCard(adminData)}
+
     <div class="card">
       <h3>Respuestas individuales</h3>
       <p class="desc">Toca un nombre para ver el detalle. “≠ puntajes” marca a quien eligió una candidata distinta a la que salió mejor en sus propios puntajes.</p>
@@ -844,19 +886,75 @@ function renderDashboard(){
   });
 }
 
+const generalOf = r => (r.scores && typeof r.scores._general === "string") ? r.scores._general : "";
+
+// Palabras vacías en español que no aportan a la nube.
+const STOP = new Set(("a al algo algun alguna algunas alguno algunos ante antes aqui asi aun aunque bien cada casi como con contra cual cuales cuando de del desde donde dos el ella ellas ello ellos en entre era eran es esa esas ese eso esos esta estaba estan estar este esto estos fue fueron ha habia han hay hasta la las le les lo los mas me mi mis muy mucho mucha muchos muchas nada ni no nos nosotros o otra otras otro otros para pero poco por porque puede pueden que quien se sea ser si sido sin sobre solo son su sus tambien tan tanto te tiene tienen todo todos toda todas tu un una unas uno unos ya y hace hacer tener tiene creo considero parece siento cual mismo misma mejor").split(" "));
+const norm = w => w.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+function wordCloud(texts){
+  const count = new Map(), shown = new Map();
+  texts.join(" ").toLowerCase().split(/[^a-záéíóúüñ]+/i).forEach(w => {
+    const k = norm(w);
+    if (k.length < 4 || STOP.has(k)) return;
+    count.set(k, (count.get(k) || 0) + 1);
+    if (!shown.has(k)) shown.set(k, w);
+  });
+  const top = [...count.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).slice(0, 40);
+  if (!top.length) return "";
+  const max = top[0][1], min = top[top.length - 1][1];
+  // Orden alfabético para que el tamaño, no la posición, lleve la lectura.
+  const words = [...top].sort((a, b) => a[0].localeCompare(b[0])).map(([k, n]) => {
+    const t = max === min ? 1 : (n - min) / (max - min);
+    const size = Math.round(13 + Math.sqrt(t) * 21);
+    const weight = t > .5 ? 700 : t > .2 ? 600 : 500;
+    const op = (0.6 + 0.4 * t).toFixed(2);
+    return `<span class="w" style="font-size:${size}px;font-weight:${weight};opacity:${op}" title="${esc(shown.get(k))}: ${n} ${n === 1 ? "mención" : "menciones"}">${esc(shown.get(k))}</span>`;
+  }).join(" ");
+  const list = top.slice(0, 10).map(([k, n]) => `${esc(shown.get(k))} (${n})`).join(" · ");
+  return `<div class="cloud" role="img" aria-label="Nube de palabras de los comentarios escritos">${words}</div>
+    <p class="desc" style="margin:8px 0 0"><b>Más mencionadas:</b> ${list}</p>`;
+}
+
+function commentsCard(rows){
+  const groups = [];
+  CRITERIA.forEach(c => {
+    const items = rows.map(r => ({ r, s: (r.scores && r.scores[c.id]) || {} })).filter(x => x.s.note);
+    if (items.length) groups.push({ title: `${c.num}. ${c.title}`, items: items.map(({ r, s }) =>
+      ({ who: r.evaluator_name, meta: `Daniela ${showVal(s.daniela)} · Lila ${showVal(s.lila)}`, text: s.note })) });
+  });
+  const gen = rows.filter(r => generalOf(r)).map(r => ({ who: r.evaluator_name, meta: "", text: generalOf(r) }));
+  if (gen.length) groups.push({ title: "Comentarios generales", items: gen });
+  const fin = rows.filter(r => (r.final_reasoning || []).length).map(r => ({ who: r.evaluator_name, meta: `Prefiere a ${r.final_choice}`, text: r.final_reasoning.join(" · ") }));
+  if (fin.length) groups.push({ title: "Razón de la preferencia final", items: fin });
+
+  const texts = groups.flatMap(g => g.items.map(i => i.text));
+  if (!texts.length) return `<div class="card"><h3>Comentarios escritos</h3><p class="desc">Todavía no hay comentarios escritos.</p></div>`;
+  return `<div class="card">
+    <h3>Comentarios escritos</h3>
+    <p class="desc">${texts.length} comentario${texts.length === 1 ? "" : "s"} de evidencia, generales y de preferencia final. El tamaño de cada palabra indica cuántas veces aparece.</p>
+    ${wordCloud(texts)}
+    <div style="margin-top:14px">
+    ${groups.map(g => `<details class="cgroup"><summary>${esc(g.title)} <span class="muted">· ${g.items.length}</span></summary>
+      ${g.items.map(i => `<div class="cmt"><div class="who">${esc(i.who)}${i.meta ? ` <span class="muted">· ${esc(i.meta)}</span>` : ""}</div><div>${esc(i.text)}</div></div>`).join("")}
+    </details>`).join("")}
+    </div>
+  </div>`;
+}
+
 function exportCSV(){
   const head = ["Evaluador", "Fecha de envío"];
   CRITERIA.forEach(c => head.push(`C${c.num} Daniela`, `C${c.num} Lila`, `C${c.num} Evidencia`));
   head.push("Ponderado Daniela", "Ponderado Lila");
   QUESTIONS.forEach((q, i) => head.push(`Q${i + 1}`));
-  head.push("Preferencia final", "Razón 1", "Razón 2", "Razón 3");
+  head.push("Preferencia final", "Razón 1", "Razón 2", "Razón 3", "Comentarios generales");
   const rows = adminData.map(r => {
     const out = [r.evaluator_name, r.created_at];
     CRITERIA.forEach(c => { const s = (r.scores && r.scores[c.id]) || {}; out.push(s.daniela == null ? "" : showVal(s.daniela), s.lila == null ? "" : showVal(s.lila), s.note || ""); });
     out.push(fmt(weighted(r.scores, "daniela")), fmt(weighted(r.scores, "lila")));
     QUESTIONS.forEach(q => out.push((r.comparisons && r.comparisons[q.id]) || ""));
     const fr = r.final_reasoning || [];
-    out.push(r.final_choice || "", fr[0] || "", fr[1] || "", fr[2] || "");
+    out.push(r.final_choice || "", fr[0] || "", fr[1] || "", fr[2] || "", generalOf(r));
     return out;
   });
   const csv = [head, ...rows].map(row => row.map(v => `"${String(v).replace(/"/g, '""')}"`).join(",")).join("\r\n");
