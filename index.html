@@ -149,6 +149,10 @@
   .hbar .fill{height:100%;border-radius:6px}
   .hbar .v{text-align:right;font-weight:700;font-variant-numeric:tabular-nums}
   .nocount{font-size:12px;color:var(--muted);margin-top:4px}
+  .overlay{position:fixed;inset:0;z-index:50;background:rgba(16,24,40,.55);display:flex;align-items:center;justify-content:center;padding:16px}
+  .modal{width:100%;max-width:560px;margin:0;max-height:calc(100vh - 32px);overflow:auto}
+  .modal textarea{min-height:140px;margin-top:4px}
+  .gm-count{font-size:13px;color:var(--muted);min-height:1.2em;margin-top:6px}
   .cloud{display:flex;flex-wrap:wrap;justify-content:center;align-items:baseline;gap:4px 12px;padding:16px 8px;margin-top:10px;background:#F8F9FB;border:1px solid var(--border);border-radius:12px;line-height:1.15}
   .cloud .w{color:var(--navy);cursor:default}
   details.cgroup{border-top:1px solid var(--border);padding:10px 0}
@@ -492,7 +496,7 @@ function noteHTML(cid){
 function bindNote(cid){
   const box = document.getElementById("note-box-" + cid);
   const t = box.querySelector("textarea"), o = box.querySelector("[data-open]");
-  if (t) t.oninput = () => { draft.scores[cid].note = t.value; saveDraft(); if (t.value.trim()) box.closest(".crit").classList.remove("missing"); refreshProgress(); updateGeneralHint(); };
+  if (t) t.oninput = () => { draft.scores[cid].note = t.value; saveDraft(); if (t.value.trim()) box.closest(".crit").classList.remove("missing"); refreshProgress(); };
   if (o) o.onclick = () => { draft.scores[cid].open = true; box.innerHTML = noteHTML(cid); bindNote(cid); box.querySelector("textarea").focus(); };
 }
 const cardIncomplete = c => { const s = draft.scores[c.id]; return !s.daniela || !s.lila; };
@@ -521,17 +525,8 @@ function renderPart1(){
       <div><b>Evidencia escrita:</b> opcional. Te la sugerimos cuando das un 1 o un 5, o cuando hay 2+ puntos de diferencia entre candidatas.</div>
     </div>
     ${cards}
-    <div class="card crit" id="card-general">
-      <h3>Comentarios generales</h3>
-      <p class="desc" id="general-hint"></p>
-      <textarea id="general" maxlength="1000" placeholder="Tus observaciones generales sobre ambas candidatas">${esc(draft.general)}</textarea>
-    </div>
     <div class="err" id="err"></div>
     <div class="nav"><button class="btn ghost" id="back">← Atrás</button><button class="btn" id="next">Continuar →</button></div>`;
-
-  const general = document.getElementById("general");
-  general.oninput = () => { draft.general = general.value; saveDraft(); if (general.value.trim()) document.getElementById("card-general").classList.remove("missing"); };
-  updateGeneralHint();
 
   $app.querySelectorAll(".scale button").forEach(btn => btn.onclick = () => {
     const { c, k, v } = btn.dataset;
@@ -554,24 +549,41 @@ function renderPart1(){
       document.getElementById("card-" + missing[0].id).scrollIntoView({ behavior: "smooth", block: "center" });
       return;
     }
-    if (generalRequired() && !draft.general.trim()){
-      document.getElementById("card-general").classList.add("missing");
-      document.getElementById("err").textContent = "No escribiste evidencia en ningún criterio: deja al menos un comentario general.";
-      document.getElementById("card-general").scrollIntoView({ behavior: "smooth", block: "center" });
-      general.focus({ preventScroll: true });
-      return;
-    }
+    document.getElementById("err").textContent = "";
+    if (generalRequired() && draft.general.trim().length < GENERAL_MIN) return openGeneralModal();
     goStep(2);
   };
 }
 
-// Los comentarios generales son obligatorios solo si no hay evidencia escrita en ningún criterio.
+// Si no hay evidencia escrita en ningún criterio, al dar "Continuar" se abre un recuadro
+// obligatorio de comentarios generales; no se puede avanzar sin llenarlo.
+const GENERAL_MIN = 10; // caracteres mínimos
 const generalRequired = () => !CRITERIA.some(c => draft.scores[c.id].note.trim());
-function updateGeneralHint(){
-  const h = document.getElementById("general-hint");
-  if (h) h.textContent = generalRequired()
-    ? "Obligatorio: no escribiste evidencia en ningún criterio. Comparte al menos una observación general."
-    : "Opcional: cualquier observación adicional sobre las candidatas.";
+function openGeneralModal(){
+  const ov = document.createElement("div");
+  ov.className = "overlay";
+  ov.innerHTML = `<div class="modal card" role="dialog" aria-modal="true" aria-labelledby="gm-title">
+      <h3 id="gm-title">Comentarios generales</h3>
+      <p class="desc">No escribiste evidencia en ningún criterio. Para continuar, comparte tus <b>observaciones o evidencias generales</b> sobre ambas candidatas.</p>
+      <textarea id="general" maxlength="1500" placeholder="¿Qué observaste de Daniela y de Lila que sustente tus puntajes?">${esc(draft.general)}</textarea>
+      <div class="gm-count" id="gm-count"></div>
+      <div class="nav"><button class="btn ghost" id="gm-back">← Volver</button><button class="btn" id="gm-go">Guardar y continuar →</button></div>
+    </div>`;
+  document.body.appendChild(ov);
+  document.body.style.overflow = "hidden";
+  const t = ov.querySelector("#general"), go = ov.querySelector("#gm-go"), cnt = ov.querySelector("#gm-count");
+  const sync = () => {
+    const n = t.value.trim().length;
+    go.disabled = n < GENERAL_MIN;
+    cnt.textContent = n < GENERAL_MIN ? `Escribe al menos ${GENERAL_MIN} caracteres (${n}/${GENERAL_MIN}).` : "";
+  };
+  const close = () => { ov.remove(); document.body.style.overflow = ""; document.removeEventListener("keydown", onKey); };
+  const onKey = e => { if (e.key === "Escape") close(); };
+  t.oninput = () => { draft.general = t.value; saveDraft(); sync(); };
+  ov.querySelector("#gm-back").onclick = close;
+  go.onclick = () => { if (t.value.trim().length < GENERAL_MIN) return; draft.general = t.value; saveDraft(); close(); goStep(2); };
+  document.addEventListener("keydown", onKey);
+  sync(); t.focus();
 }
 
 function choiceHTML(attr, id, value, big){
