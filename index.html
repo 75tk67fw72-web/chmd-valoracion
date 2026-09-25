@@ -248,44 +248,41 @@ const CANDIDATES = [
 
 // Texto tomado del "Instrumento de Valoración Final" (septiembre 2026).
 // `guide` = guía breve visible; `desc` = guía completa (desplegable).
-// Pesos: deben sumar 100. 10a y 10b se evalúan por separado y comparten el 2% (1% c/u).
+// Pesos: deben sumar 100 (Matriz Final de Evaluación DG CHMD). Los `id` internos se conservan
+// de versiones anteriores para no perder respuestas ya enviadas; el orden visible lo da `num`.
 const CRITERIA = [
-  { id: "c1",  num: "1",  title: "Liderazgo estratégico y visión", weight: 15,
+  { id: "c1",  num: "1",  title: "Liderazgo estratégico y visión", weight: 10,
     guide: "Visión de largo plazo que integre lo académico, lo judío y lo comunitario, y la traduzca en dirección concreta.",
     desc: ["¿Puede articular una visión de largo plazo para el CHMD y convertirla en dirección concreta? ¿Su visión integra lo académico, lo judío y lo comunitario, o los trata como mundos separados?"] },
   { id: "c2",  num: "2",  title: "Capacidad de transformación", weight: 15,
     guide: "Mejora significativa sin desestabilizar: construir desde lo que el CHMD ya es, no importar un modelo externo.",
     desc: ["¿Puede desafiar la práctica actual, superar la resistencia y liderar mejora significativa sin desestabilizar el colegio? ¿Entiende que transformar el CHMD es construir desde lo que ya es, no importar un modelo externo?"] },
-  { id: "c3",  num: "3",  title: "Liderazgo educativo y académico", weight: 12,
+  { id: "c3",  num: "3",  title: "Liderazgo educativo y académico", weight: 15,
     guide: "Trayectoria real de mejora en aprendizaje y resultados, dominio del Bachillerato Internacional y criterio pedagógico propio.",
     desc: ["¿Tiene trayectoria real de mejora en enseñanza, aprendizaje, evaluación y resultados? ¿Conoce el programa del Bachillerato Internacional (IB) desde adentro? ¿Su criterio pedagógico es propio o depende de lo que le dicen los coordinadores?"] },
-  { id: "c4",  num: "4",  title: "Identidad judía y alineación cultural", weight: 18, key: true,
+  { id: "c4",  num: "4",  title: "Identidad judía y alineación cultural", weight: 17, key: true,
     guide: "No si es judía, sino si defenderá la identidad judía como eje no negociable cuando se le presione.",
     desc: ["No evalúa si la candidata es judía. Evalúa si puede defender la identidad judía como el eje no negociable del colegio cuando una familia la cuestiona, cuando un docente la resiste, o cuando el calendario académico la presiona.",
            "¿Comprende que el judaísmo en el CHMD no es cultura a respetar, sino misión a sostener? ¿Tiene convicción genuina o deferencia protocolar?"] },
   { id: "c5",  num: "5",  title: "Liderazgo comunitario y grupos de interés", weight: 10,
     guide: "Confianza simultánea con Patronato, padres, docentes y comunidad judía. ¿Convoca o impone?",
     desc: ["¿Puede construir confianza simultánea con el Patronato, los padres, el equipo docente y la comunidad judía? ¿Su liderazgo convoca o impone? ¿La seguirían quienes más necesita que la sigan?"] },
-  { id: "c6",  num: "6",  title: "Liderazgo de personas y cultura", weight: 8,
+  { id: "c6",  num: "6",  title: "Liderazgo de personas y cultura", weight: 10,
     guide: "Inspira, desarrolla y exige a la vez; sabe manejar la resistencia de personal con muchos años en el colegio.",
     desc: ["¿Puede inspirar, desarrollar y responsabilizar a su equipo al mismo tiempo? ¿Genera una cultura de trabajo positiva y de alto desempeño? ¿Cómo maneja a quien resiste el cambio con muchos años en el colegio?"] },
-  { id: "c7",  num: "7",  title: "Liderazgo de organización compleja", weight: 8,
-    guide: "Evidencia de haber dirigido con éxito una institución de escala y complejidad comparable al CHMD.",
-    desc: ["¿Tiene evidencia de haber dirigido exitosamente una institución de escala y complejidad comparable al CHMD, con múltiples grupos de interés y prioridades en tensión permanente?"] },
-  { id: "c8",  num: "8",  title: "Cualidades personales y presencia", weight: 7,
-    guide: "Juicio, inteligencia emocional, resiliencia e integridad; la misma persona en la junta y en el pasillo.",
-    desc: ["¿Tiene juicio, inteligencia emocional, resiliencia e integridad? ¿Genera credibilidad y confianza de forma natural? ¿Es auténtica — lo mismo en la sala de reuniones que en el pasillo del colegio?"] },
-  { id: "c9",  num: "9",  title: "Gobernanza y relación con el Patronato", weight: 5,
+  { id: "c10a", num: "7", title: "Gestión financiera", weight: 5,
+    guide: "Gestión de presupuestos y recursos; sostenibilidad financiera al servicio de la misión educativa.",
+    desc: ["¿Tiene capacidad de gestión de presupuestos y recursos? ¿Entiende la relación entre sostenibilidad financiera y misión educativa?"] },
+  { id: "c10b", num: "8", title: "Gestión operativa", weight: 5,
+    guide: "Gestión disciplinada de instalaciones, procesos y operación diaria del colegio.",
+    desc: ["¿Gestiona con disciplina las instalaciones, los procesos y la operación diaria del colegio? ¿Anticipa problemas y asegura que la operación sirva al proyecto educativo?"] },
+  { id: "c9",  num: "9",  title: "Gobernanza y relación con el Patronato", weight: 8,
     guide: "Comunica temas difíciles, rinde cuentas y distingue por instinto su autoridad de la del Patronato.",
     desc: ["¿Puede trabajar efectivamente con el Patronato, comunicar temas difíciles con claridad y establecer una rendición de cuentas apropiada? ¿Entiende dónde termina su autoridad y dónde empieza la del Patronato — de forma instintiva, no solo de forma teórica?"] },
-  { id: "c10a", num: "10a", title: "Liderazgo financiero", weight: 1, group: "Finanzas y operación · 2% combinado",
-    guide: "Gestión de presupuestos y recursos; sostenibilidad financiera al servicio de la misión educativa.",
-    desc: ["¿Tiene capacidad de gestión de presupuestos y recursos? ¿Entiende la relación entre sostenibilidad financiera y misión educativa?",
-           "Se evalúa por separado de la operación; ambos comparten el 2% del criterio original. Tiene menor peso porque ambas candidatas tienen esta base cubierta."] },
-  { id: "c10b", num: "10b", title: "Liderazgo operativo", weight: 1, group: "Finanzas y operación · 2% combinado",
-    guide: "Gestión disciplinada de instalaciones, procesos y operación diaria del colegio.",
-    desc: ["¿Gestiona con disciplina las instalaciones, los procesos y la operación diaria del colegio? ¿Anticipa problemas y asegura que la operación sirva al proyecto educativo?",
-           "Se evalúa por separado de las finanzas; ambos comparten el 2% del criterio original."] },
+  { id: "c8",  num: "10", title: "Cualidades personales y compatibilidad con la institución", weight: 5,
+    guide: "Juicio, integridad y presencia; afinidad genuina con la cultura, los valores y la forma de ser del CHMD.",
+    desc: ["¿Tiene juicio, inteligencia emocional, resiliencia e integridad? ¿Genera credibilidad y confianza de forma natural? ¿Es auténtica — lo mismo en la sala de reuniones que en el pasillo del colegio?",
+           "¿Es compatible con la institución: su cultura, sus valores y su manera de hacer las cosas? ¿Encajaría con el equipo y la comunidad del CHMD?"] },
 ];
 
 // La evidencia escrita es siempre opcional; se sugiere (campo abierto) con puntaje extremo o diferencia importante.
@@ -856,7 +853,7 @@ function renderDashboard(){
 
     <div class="card">
       <h3>Desglose por criterio</h3>
-      <p class="desc" style="margin-bottom:4px">Promedio por candidata (1–5), sin contar N/O. ★ = criterio de mayor peso. 10a y 10b comparten el 2%.</p>
+      <p class="desc" style="margin-bottom:4px">Promedio por candidata (1–5), sin contar N/O. ★ = criterio de mayor peso.</p>
       ${A.crit.map(x => `
         <div class="crow ${x.c.key ? "key" : ""}">
           <div class="top"><span class="t">${x.c.num}. ${esc(x.c.title)} <span class="muted">· ${x.c.weight}%</span></span>${advChip(x.diff)}</div>
