@@ -191,6 +191,42 @@
   .kv b{color:var(--navy)}
   ol.reason{margin:6px 0 0;padding-left:20px;font-size:14px}
 
+  /* Informe ejecutivo */
+  .report{background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:22px 18px;margin:12px 0 24px;font-size:15px;line-height:1.5}
+  .report h1{font-size:21px;color:var(--navy);margin:4px 0 6px;line-height:1.25}
+  .report h2{font-size:15px;color:var(--navy);text-transform:uppercase;letter-spacing:.6px;border-bottom:2px solid var(--gold);padding-bottom:4px;margin:22px 0 10px}
+  .report h3{font-size:14px;color:var(--navy);margin:14px 0 6px}
+  .report p{margin:6px 0}
+  .report ul,.report ol{margin:6px 0;padding-left:20px}
+  .report li{margin:4px 0}
+  .report b.dan,.report .c.dan{color:var(--dan)} .report b.lila,.report .c.lila{color:var(--lila)}
+  .r-kicker{font-size:12px;letter-spacing:.8px;text-transform:uppercase;color:var(--gold);font-weight:700}
+  .r-meta{font-size:13px;color:var(--muted)}
+  .r-head{border-bottom:1px solid var(--border);padding-bottom:12px}
+  .r-kpis{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:8px 0 10px}
+  .r-kpi{border-radius:10px;padding:12px;color:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .r-kpi.dan{background:var(--dan)} .r-kpi.lila{background:var(--lila)}
+  .r-kpi .lbl{font-size:13px;opacity:.9} .r-kpi .val{font-size:28px;font-weight:800;line-height:1.1} .r-kpi .val small{font-size:13px;opacity:.85} .r-kpi .sub{font-size:12px;opacity:.9}
+  .r-table{width:100%;border-collapse:collapse;font-size:13px;margin:8px 0}
+  .r-table th,.r-table td{border-bottom:1px solid var(--border);padding:6px 5px;text-align:left;vertical-align:top}
+  .r-table th{font-size:12px;color:var(--muted);font-weight:600}
+  .r-table .c{text-align:center;white-space:nowrap}
+  .r-table tr.key td:first-child{font-weight:700}
+  .r-cols{display:grid;grid-template-columns:1fr;gap:4px 18px}
+  .quotes{list-style:none;padding-left:0}
+  .quotes li{border-left:3px solid var(--gold-soft);padding:2px 0 2px 10px;font-style:italic;color:#374151}
+  .r-foot{margin-top:22px;padding-top:10px;border-top:1px solid var(--border);font-size:12px;color:var(--muted)}
+  @media (min-width:640px){ .r-cols{grid-template-columns:1fr 1fr} .report{padding:32px 36px} }
+  @media print{
+    @page{margin:16mm 14mm}
+    body{background:#fff}
+    header.brand,footer,.demo-banner,.no-print{display:none !important}
+    .wrap{max-width:none;padding:0}
+    .report{border:0;padding:0;margin:0;font-size:11.5pt}
+    .report section{break-inside:avoid-page}
+    .r-table tr{break-inside:avoid}
+    .r-cols{grid-template-columns:1fr 1fr}
+  }
   @media (min-width:640px){
     .cand-row{grid-template-columns:90px 1fr}
     .legend{margin-left:100px}
@@ -824,6 +860,7 @@ function renderDashboard(){
     <div class="section-title">Resultados del Comité</div>
     <div class="toolbar">
       <button class="btn small" id="refresh">↻ Actualizar</button>
+      <button class="btn small gold" id="report" ${A.n ? "" : "disabled"}>📄 Informe ejecutivo</button>
       <button class="btn small ghost" id="csv" ${A.n ? "" : "disabled"}>Exportar CSV</button>
       ${(sheetUrl || CONFIG.SHEET_URL) ? `<a class="btn small ghost" href="${esc(sheetUrl || CONFIG.SHEET_URL)}" target="_blank" rel="noopener">Abrir hoja de Google ↗</a>` : ""}
       <button class="btn small ghost" id="logout">Salir</button>
@@ -891,6 +928,7 @@ function renderDashboard(){
     renderEvaluator();
   };
   document.getElementById("csv").onclick = exportCSV;
+  document.getElementById("report").onclick = () => { if (adminData.length) renderReport(); };
   $app.querySelectorAll("[data-del]").forEach(b => b.onclick = async () => {
     if (!confirm(`¿Eliminar la valoración de "${b.dataset.nm}"? No se puede deshacer.`)) return;
     try { await api.remove(adminPassword, b.dataset.del); adminData = await api.results(adminPassword); renderDashboard(); }
@@ -901,10 +939,11 @@ function renderDashboard(){
 const generalOf = r => (r.scores && typeof r.scores._general === "string") ? r.scores._general : "";
 
 // Palabras vacías en español que no aportan a la nube.
-const STOP = new Set(("a al algo algun alguna algunas alguno algunos ante antes aqui asi aun aunque bien cada casi como con contra cual cuales cuando de del desde donde dos el ella ellas ello ellos en entre era eran es esa esas ese eso esos esta estaba estan estar este esto estos fue fueron ha habia han hay hasta la las le les lo los mas me mi mis muy mucho mucha muchos muchas nada ni no nos nosotros o otra otras otro otros para pero poco por porque puede pueden que quien se sea ser si sido sin sobre solo son su sus tambien tan tanto te tiene tienen todo todos toda todas tu un una unas uno unos ya y hace hacer tener tiene creo considero parece siento cual mismo misma mejor").split(" "));
+const STOP = new Set(("a al algo algun alguna algunas alguno algunos ante antes aqui asi aun aunque bien cada casi como con contra cual cuales cuando de del desde donde dos el ella ellas ello ellos en entre era eran es esa esas ese eso esos esta estaba estan estar este esto estos fue fueron ha habia han hay hasta la las le les lo los mas me mi mis muy mucho mucha muchos muchas nada ni no nos nosotros o otra otras otro otros para pero poco por porque puede pueden que quien se sea ser si sido sin sobre solo son su sus tambien tan tanto te tiene tienen todo todos toda todas tu un una unas uno unos ya y hace hacer tener tiene creo considero parece siento cual mismo misma mejor daniela lila candidata candidatas").split(" "));
 const norm = w => w.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
-function wordCloud(texts){
+// Palabras más frecuentes: [[clave, conteo], ...] y cómo mostrar cada clave.
+function topWords(texts, n){
   const count = new Map(), shown = new Map();
   texts.join(" ").toLowerCase().split(/[^a-záéíóúüñ]+/i).forEach(w => {
     const k = norm(w);
@@ -912,7 +951,11 @@ function wordCloud(texts){
     count.set(k, (count.get(k) || 0) + 1);
     if (!shown.has(k)) shown.set(k, w);
   });
-  const top = [...count.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).slice(0, 40);
+  return { top: [...count.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).slice(0, n), shown };
+}
+
+function wordCloud(texts){
+  const { top, shown } = topWords(texts, 40);
   if (!top.length) return "";
   const max = top[0][1], min = top[top.length - 1][1];
   // Orden alfabético para que el tamaño, no la posición, lleve la lectura.
@@ -979,6 +1022,198 @@ function exportCSV(){
 /* =====================================================================
    Navegación
    ===================================================================== */
+/* =====================================================================
+   Informe ejecutivo para la Comisión (anónimo: sin nombres de evaluadores)
+   ===================================================================== */
+const pct = (a, n) => n ? Math.round(a / n * 100) : 0;
+const plural = (n, s, p) => n === 1 ? s : (p || s + "s");
+const other = name => name === "Daniela" ? "Lila" : "Daniela";
+const nameCls = name => `<b class="${candByName(name) ? candByName(name).cls : ""}">${esc(name)}</b>`;
+
+function reportData(rows){
+  const A = aggregate(rows);
+  const n = A.n, D = A.total.daniela, L = A.total.lila;
+  const gap = (D != null && L != null) ? D - L : null;
+  const scoreLeader = gap == null || Math.abs(gap) < 0.005 ? null : (gap > 0 ? "Daniela" : "Lila");
+  const level = gap == null ? "" : Math.abs(gap) < 0.15 ? "empate técnico" : Math.abs(gap) < 0.4 ? "ventaja moderada" : "ventaja clara";
+  const prefLeader = A.fin.Daniela === A.fin.Lila ? null : (A.fin.Daniela > A.fin.Lila ? "Daniela" : "Lila");
+
+  // Por evaluador: quién sale mejor en su propio ponderado y si su preferencia coincide.
+  const ev = rows.map(r => {
+    const wd = weighted(r.scores, "daniela"), wl = weighted(r.scores, "lila");
+    const lead = wd == null || wl == null || Math.abs(wd - wl) < 0.005 ? null : (wd > wl ? "Daniela" : "Lila");
+    return { lead, pref: r.final_choice, mismatch: !!(lead && r.final_choice && lead !== r.final_choice) };
+  });
+  const scoreFavor = { Daniela: ev.filter(e => e.lead === "Daniela").length, Lila: ev.filter(e => e.lead === "Lila").length };
+  const mismatches = ev.filter(e => e.mismatch).length;
+
+  // Por criterio: contribución a la diferencia (diferencia de promedios × peso) y división del Comité.
+  const crit = A.crit.map(x => {
+    const diffs = rows.map(r => { const s = (r.scores && r.scores[x.c.id]) || {}; return isNum(s.daniela) && isNum(s.lila) ? s.daniela - s.lila : null; }).filter(v => v != null);
+    const favD = diffs.filter(d => d > 0).length, favL = diffs.filter(d => d < 0).length;
+    const split = diffs.length >= 3 && Math.min(favD, favL) / diffs.length >= 0.3;
+    return Object.assign({}, x, { contrib: x.diff == null ? 0 : x.diff * x.c.weight / 100, favD, favL, split, nNO: x.no.daniela + x.no.lila });
+  });
+  const drivers = [...crit].filter(x => Math.abs(x.contrib) >= 0.005).sort((a, b) => Math.abs(b.contrib) - Math.abs(a.contrib));
+
+  // Preguntas de contraste
+  const q = A.q.map(x => ({ q: x.q, t: x.t, lead: x.t.Daniela === x.t.Lila ? null : (x.t.Daniela > x.t.Lila ? "Daniela" : "Lila") }));
+  const qWins = { Daniela: q.filter(x => x.lead === "Daniela").length, Lila: q.filter(x => x.lead === "Lila").length };
+
+  // Comentarios (anónimos)
+  const reasons = { Daniela: [], Lila: [] };
+  rows.forEach(r => { if (reasons[r.final_choice] && (r.final_reasoning || []).length) reasons[r.final_choice].push(r.final_reasoning.join(" · ")); });
+  const generals = rows.map(generalOf).filter(Boolean);
+  const allTexts = [].concat(...rows.map(r => CRITERIA.map(c => (r.scores && r.scores[c.id] && r.scores[c.id].note) || "")), generals, ...rows.map(r => r.final_reasoning || [])).filter(Boolean);
+  const words = topWords(allTexts, 12);
+
+  return { A, n, D, L, gap, scoreLeader, level, prefLeader, ev, scoreFavor, mismatches, crit, drivers, q, qWins, reasons, generals, words };
+}
+
+function reportHTML(R){
+  const { n, D, L, gap, scoreLeader, level, prefLeader, A } = R;
+  const fecha = new Date().toLocaleDateString("es-MX", { day: "numeric", month: "long", year: "numeric" });
+  const hall = [], riesgos = [];
+
+  // Resumen
+  const resumen = [];
+  resumen.push(`Se recibieron <b>${n}</b> ${plural(n, "valoración", "valoraciones")} del Comité.`);
+  resumen.push(scoreLeader
+    ? `En el puntaje ponderado, ${nameCls(scoreLeader)} obtiene <b>${fmt(Math.max(D, L))}</b> frente a <b>${fmt(Math.min(D, L))}</b> de ${nameCls(other(scoreLeader))}: <b>${level}</b> de ${fmt(Math.abs(gap))} puntos sobre 5.`
+    : `En el puntaje ponderado ambas candidatas quedan prácticamente empatadas (${fmt(D)} y ${fmt(L)} sobre 5).`);
+  resumen.push(prefLeader
+    ? `En la preferencia final, <b>${A.fin[prefLeader]} de ${n}</b> (${pct(A.fin[prefLeader], n)}%) ${plural(A.fin[prefLeader], "recomienda", "recomiendan")} a ${nameCls(prefLeader)}.`
+    : `La preferencia final está dividida en partes iguales (${A.fin.Daniela} y ${A.fin.Lila}).`);
+  if (scoreLeader && prefLeader && scoreLeader !== prefLeader)
+    resumen.push(`<b>Atención:</b> el puntaje favorece a ${nameCls(scoreLeader)}, pero la preferencia final favorece a ${nameCls(prefLeader)}. Conviene discutir esta diferencia en la sesión de cierre.`);
+  else if (scoreLeader && prefLeader)
+    resumen.push(`Puntaje y preferencia final apuntan en la misma dirección.`);
+
+  // Hallazgos
+  hall.push(`En su propio ponderado, ${R.scoreFavor.Daniela} ${plural(R.scoreFavor.Daniela, "evaluador favorece", "evaluadores favorecen")} a ${nameCls("Daniela")} y ${R.scoreFavor.Lila} a ${nameCls("Lila")}${n - R.scoreFavor.Daniela - R.scoreFavor.Lila ? ` (${n - R.scoreFavor.Daniela - R.scoreFavor.Lila} en empate)` : ""}.`);
+  hall.push(`En las 5 preguntas de contraste, ${nameCls("Daniela")} gana ${R.qWins.Daniela} y ${nameCls("Lila")} ${R.qWins.Lila}${5 - R.qWins.Daniela - R.qWins.Lila ? ` (${5 - R.qWins.Daniela - R.qWins.Lila} ${plural(5 - R.qWins.Daniela - R.qWins.Lila, "empatada", "empatadas")})` : ""}.`);
+  const k4 = R.crit.find(x => x.c.key);
+  if (k4 && k4.diff != null) hall.push(`En <b>${esc(k4.c.title)}</b> (criterio de mayor peso, ${k4.c.weight}%): ${Math.abs(k4.diff) < 0.05 ? "empate" : `${nameCls(k4.diff > 0 ? "Daniela" : "Lila")} +${fmt(Math.abs(k4.diff))}`} (${fmt(k4.avg.daniela)} frente a ${fmt(k4.avg.lila)}).`);
+  const strongD = R.crit.filter(x => x.diff != null && x.diff >= 0.5).map(x => esc(x.c.title));
+  const strongL = R.crit.filter(x => x.diff != null && x.diff <= -0.5).map(x => esc(x.c.title));
+  if (strongD.length) hall.push(`Fortalezas claras de ${nameCls("Daniela")} (0.5+ puntos): ${strongD.join(", ")}.`);
+  if (strongL.length) hall.push(`Fortalezas claras de ${nameCls("Lila")} (0.5+ puntos): ${strongL.join(", ")}.`);
+
+  // Qué explica el resultado
+  const drivers = R.drivers.slice(0, 4).map(x =>
+    `<li><b>${esc(x.c.num)}. ${esc(x.c.title)}</b> (${x.c.weight}%): aporta ${fmt(Math.abs(x.contrib))} puntos a favor de ${nameCls(x.contrib > 0 ? "Daniela" : "Lila")}.</li>`).join("");
+
+  // Riesgos
+  if (n < 5) riesgos.push(`Base pequeña: con ${n} ${plural(n, "valoración", "valoraciones")}, una sola respuesta puede mover el resultado.`);
+  const splits = R.crit.filter(x => x.split);
+  if (splits.length) riesgos.push(`Comité dividido en: ${splits.map(x => `<b>${esc(x.c.title)}</b> (${x.favD} a favor de Daniela, ${x.favL} de Lila)`).join("; ")}.`);
+  if (R.mismatches) riesgos.push(`${R.mismatches} ${plural(R.mismatches, "evaluador eligió", "evaluadores eligieron")} en la preferencia final a una candidata distinta a la que salió mejor en sus propios puntajes.`);
+  const noCrit = R.crit.filter(x => x.nNO).sort((a, b) => b.nNO - a.nNO);
+  if (A.noTotal) riesgos.push(`${A.noTotal} ${plural(A.noTotal, "respuesta", "respuestas")} N/O (información insuficiente), sobre todo en: ${noCrit.slice(0, 3).map(x => `${esc(x.c.title)} (${x.nNO})`).join(", ")}.`);
+  const closeQ = R.q.filter(x => Math.abs(x.t.Daniela - x.t.Lila) <= 1 && (x.t.Daniela + x.t.Lila) >= 2);
+  if (closeQ.length) riesgos.push(`Preguntas de contraste muy cerradas (diferencia de 1 voto o menos): ${closeQ.map(x => `“${esc(x.q.text)}”`).join(" ")}`);
+  if (!riesgos.length) riesgos.push("No se identifican divisiones relevantes ni inconsistencias en las respuestas.");
+
+  const tablaCrit = R.crit.map(x => `<tr${x.c.key ? ' class="key"' : ""}><td>${esc(x.c.num)}. ${esc(x.c.title)}</td><td class="c">${x.c.weight}%</td>
+    <td class="c dan">${fmt(x.avg.daniela)}</td><td class="c lila">${fmt(x.avg.lila)}</td>
+    <td class="c">${x.diff == null || Math.abs(x.diff) < 0.05 ? "Empate" : `${nameCls(x.diff > 0 ? "Daniela" : "Lila")} +${fmt(Math.abs(x.diff))}`}</td></tr>`).join("");
+  const tablaQ = R.q.map((x, i) => `<tr><td>${i + 1}. ${esc(x.q.text)}</td><td class="c dan">${x.t.Daniela}</td><td class="c lila">${x.t.Lila}</td></tr>`).join("");
+  const quotes = name => R.reasons[name].length ? `<ul class="quotes">${R.reasons[name].map(t => `<li>“${esc(t)}”</li>`).join("")}</ul>` : `<p class="muted">Sin razones escritas.</p>`;
+  const words = R.words.top.length ? R.words.top.map(([k, c]) => `${esc(R.words.shown.get(k))} (${c})`).join(" · ") : "";
+
+  return `
+  <article class="report" id="reportDoc">
+    <header class="r-head">
+      <div class="r-kicker">Colegio Hebreo Maguen David · Comité de Selección</div>
+      <h1>Informe ejecutivo · Valoración final para Dirección General</h1>
+      <div class="r-meta">${fecha} · ${n} ${plural(n, "valoración", "valoraciones")} · Documento confidencial</div>
+    </header>
+
+    <section>
+      <h2>1. Resumen ejecutivo</h2>
+      <div class="r-kpis">
+        ${CANDIDATES.map(c => `<div class="r-kpi ${c.cls}"><div class="lbl">${c.name}</div><div class="val">${fmt(A.total[c.key])}<small> / 5</small></div><div class="sub">${A.fin[c.name]} de ${n} preferencias finales</div></div>`).join("")}
+      </div>
+      ${resumen.map(t => `<p>${t}</p>`).join("")}
+    </section>
+
+    <section>
+      <h2>2. Hallazgos clave</h2>
+      <ul>${hall.map(t => `<li>${t}</li>`).join("")}</ul>
+    </section>
+
+    <section>
+      <h2>3. Qué explica el resultado</h2>
+      <p>Criterios que más mueven la diferencia en el ponderado (diferencia de promedios × peso):</p>
+      ${drivers ? `<ul>${drivers}</ul>` : `<p class="muted">Ningún criterio marca diferencia relevante.</p>`}
+      <table class="r-table"><thead><tr><th>Criterio</th><th class="c">Peso</th><th class="c">Daniela</th><th class="c">Lila</th><th class="c">Ventaja</th></tr></thead><tbody>${tablaCrit}</tbody></table>
+      <h3>Preguntas de contraste</h3>
+      <table class="r-table"><thead><tr><th>Pregunta</th><th class="c">Daniela</th><th class="c">Lila</th></tr></thead><tbody>${tablaQ}</tbody></table>
+    </section>
+
+    <section>
+      <h2>4. Riesgos y puntos a discutir</h2>
+      <ul>${riesgos.map(t => `<li>${t}</li>`).join("")}</ul>
+    </section>
+
+    <section>
+      <h2>5. Voz del Comité (anónimo)</h2>
+      ${words ? `<p><b>Palabras más mencionadas:</b> ${words}</p>` : ""}
+      <div class="r-cols">
+        <div><h3>Razones para recomendar a ${nameCls("Daniela")}</h3>${quotes("Daniela")}</div>
+        <div><h3>Razones para recomendar a ${nameCls("Lila")}</h3>${quotes("Lila")}</div>
+      </div>
+      ${R.generals.length ? `<h3>Comentarios generales</h3><ul class="quotes">${R.generals.map(t => `<li>“${esc(t)}”</li>`).join("")}</ul>` : ""}
+    </section>
+
+    <section>
+      <h2>6. Próximos pasos sugeridos</h2>
+      <ol>
+        <li>Presentar este informe al inicio de la sesión de cierre.</li>
+        ${R.crit.some(x => x.split) || R.mismatches ? `<li>Discutir primero los puntos de división y las inconsistencias señaladas en la sección 4.</li>` : ""}
+        <li>Confirmar si el Comité alcanza consenso o si se requiere una votación formal.</li>
+        <li>Documentar la decisión y su fundamento para el Patronato.</li>
+      </ol>
+    </section>
+
+    <footer class="r-foot">Metodología: cada ponderado individual excluye los criterios marcados N/O y se reescala sobre el peso evaluado; el total es el promedio de los ponderados individuales. Informe generado automáticamente a partir de las respuestas; no incluye nombres de evaluadores.</footer>
+  </article>`;
+}
+
+function reportText(R){
+  const { n, D, L, gap, scoreLeader, level, prefLeader, A } = R;
+  const lines = [`*Informe ejecutivo · Valoración final DG CHMD*`, `${n} ${plural(n, "valoración", "valoraciones")} · Confidencial`, "",
+    `Ponderado: Daniela ${fmt(D)} · Lila ${fmt(L)}` + (scoreLeader ? ` → ${level} de ${scoreLeader} (+${fmt(Math.abs(gap))})` : " → empate"),
+    `Preferencia final: Daniela ${A.fin.Daniela} · Lila ${A.fin.Lila}`,
+    `Preguntas de contraste ganadas: Daniela ${R.qWins.Daniela} · Lila ${R.qWins.Lila}`];
+  if (scoreLeader && prefLeader && scoreLeader !== prefLeader) lines.push(`⚠️ Puntaje y preferencia final no coinciden.`);
+  const d = R.drivers.slice(0, 3).map(x => `${x.c.title} (${x.contrib > 0 ? "Daniela" : "Lila"} +${fmt(Math.abs(x.contrib))})`);
+  if (d.length) lines.push(``, `Qué explica el resultado: ${d.join("; ")}.`);
+  const sp = R.crit.filter(x => x.split).map(x => x.c.title);
+  if (sp.length) lines.push(`Comité dividido en: ${sp.join(", ")}.`);
+  return lines.join("\n");
+}
+
+function renderReport(){
+  const R = reportData(adminData);
+  $app.innerHTML = `
+    <div class="toolbar no-print">
+      <button class="btn small ghost" id="rBack">← Volver al tablero</button>
+      <button class="btn small gold" id="rPrint">🖨 Imprimir / Guardar PDF</button>
+      <button class="btn small ghost" id="rCopy">Copiar resumen</button>
+    </div>
+    <p class="desc no-print">Informe anónimo, sin nombres de evaluadores. Para compartirlo, usa <b>Imprimir → Guardar como PDF</b>.</p>
+    ${reportHTML(R)}`;
+  window.scrollTo(0, 0);
+  document.getElementById("rBack").onclick = () => renderDashboard();
+  document.getElementById("rPrint").onclick = () => window.print();
+  document.getElementById("rCopy").onclick = async () => {
+    const t = reportText(R);
+    try { await navigator.clipboard.writeText(t); alert("Resumen copiado. Pégalo en un correo o mensaje."); }
+    catch { prompt("Copia el resumen:", t); }
+  };
+}
+
 function route(){
   if (location.hash === "#resultados" || location.hash === "#admin"){ adminPassword ? renderDashboard() : renderAdminLogin(); }
   else renderEvaluator();

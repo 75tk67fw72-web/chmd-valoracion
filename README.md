@@ -100,6 +100,7 @@ Si la página no tuviera la URL de Apps Script, el enlace muestra "La valoració
 - Preguntas de contraste: conteo y porcentaje por pregunta.
 - Respuestas individuales desplegables: puntajes, evidencias, contrastes y razón principal. La etiqueta **"≠ puntajes"** marca a quien eligió una candidata distinta a la que salió mejor en sus propios puntajes; conviene conversarlo en la sesión de cierre.
 - **Comentarios escritos**: nube de palabras (el tamaño indica cuántas veces aparece cada palabra) y compendio de todos los comentarios, agrupados por criterio, comentarios generales y razón de la preferencia final.
+- **Informe ejecutivo**: genera un informe **anónimo** (sin nombres de evaluadores) para la Comisión: resumen, hallazgos, qué explica el resultado, riesgos y puntos a discutir, voz del Comité y próximos pasos. Se comparte con **Imprimir → Guardar como PDF**; **Copiar resumen** da una versión corta para correo o WhatsApp.
 - **Exportar CSV**: archivo para abrir en Excel o archivar.
 - **Abrir hoja de Google**: botón que abre tu hoja para editarla. Aparece si Apps Script está actualizado o si pones el enlace en `SHEET_URL` dentro de `index.html` (es seguro: la hoja es privada).
 
